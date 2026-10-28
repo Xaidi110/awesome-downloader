@@ -84,8 +84,8 @@ if (process.argv.includes('--native-host')) {
         openProgress: async ({id}) => {
           const d=engine.downloads.find(d=>d.id===id); if(!d)throw new Error('Download not found.');
           if(progressWindows.has(id)){showProgress(progressWindows.get(id));return;}
-          const progress=new BrowserWindow({width:580,height:460,minWidth:520,minHeight:400,title:d.filename,icon:appIconPath,backgroundColor:'#f2f5fa',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true}});
-          progress.setMenu(null);progressWindows.set(id,progress);progressWindowSizes.set(progress,{expanded:{width:580,height:460}});
+          const progress=new BrowserWindow({width:580,height:260,resizable:false,maximizable:false,title:d.filename,icon:appIconPath,backgroundColor:'#0b1120',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true}});
+          progress.setMenu(null);progressWindows.set(id,progress);progressWindowSizes.set(progress,{expanded:{width:580,height:410}});
           if(d.status==='complete'){progress.setTitle('Download complete');}
           progress.on('closed',()=>progressWindows.delete(id));
           progress.webContents.setWindowOpenHandler(()=>({action:'deny'}));
@@ -141,7 +141,7 @@ if (process.argv.includes('--native-host')) {
         return handler(data);
       });
       ipcMain.handle('downloader:closeProgress',event=>{for(const progress of progressWindows.values())if(event.senderFrame===progress.webContents.mainFrame){progress.close();break;}});
-      ipcMain.handle('downloader:resizeProgress',(event,{expanded}={})=>{for(const progress of progressWindows.values())if(event.senderFrame===progress.webContents.mainFrame){const remembered=progressWindowSizes.get(progress)||{expanded:{width:565,height:485}},[width,height]=progress.getSize();if(expanded){progress.setMinimumSize(540,440);progress.setSize(Math.max(540,remembered.expanded.width),Math.max(440,remembered.expanded.height),true);}else{if(height>360)remembered.expanded={width,height};progressWindowSizes.set(progress,remembered);progress.setMinimumSize(540,325);progress.setSize(Math.max(540,width),340,true);}return;}});
+      ipcMain.handle('downloader:resizeProgress',(event,{expanded}={})=>{for(const progress of progressWindows.values())if(event.senderFrame===progress.webContents.mainFrame){if(expanded){progress.setSize(580,410,true);}else{progress.setSize(580,260,true);}return;}});
       window = new BrowserWindow({ width: 1120, height: 720, minWidth: 840, minHeight: 540,
         title: 'Awesome Downloader', icon: appIconPath, backgroundColor: '#f2f5fa', autoHideMenuBar: false,
         webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true } });
@@ -186,7 +186,7 @@ if (process.argv.includes('--native-host')) {
       });
       engine.on('complete', d => {
         const progress=progressWindows.get(d.id);
-        if(progress&&!progress.isDestroyed()){if(engine.settings.hideCompletionDialog)progress.close();else{progress.setMinimumSize(470,270);progress.setSize(480,280);progress.setTitle('Download complete');}}
+        if(progress&&!progress.isDestroyed()){if(engine.settings.hideCompletionDialog)progress.close();else{progress.setTitle('Download complete');}}
         if (engine.settings.notifyOnComplete && Notification.isSupported()) new Notification({ title: 'Download complete', body: d.filename }).show();
         if (engine.settings.revealOnComplete && d.path) shell.showItemInFolder(d.path);
       });

@@ -3,7 +3,10 @@ const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const api = window.downloader;
 const progressMode = new URLSearchParams(location.search).get('progress');
-if (progressMode) document.body.classList.add('progress-window');
+if (progressMode) {
+  document.body.classList.add('progress-window');
+  document.body.classList.add('details-collapsed');
+}
 
 let state = { downloads: [], settings: {}, integration: {} };
 let selectedId = null, detailId = null, filter = 'all', category = '', searchTerm = '';
@@ -1102,6 +1105,13 @@ function showDetails(id) {
   const notifyComp = $('#notify-complete'); if (notifyComp) notifyComp.checked = state.settings.notifyOnComplete !== false;
   const revealComp = $('#reveal-complete'); if (revealComp) revealComp.checked = state.settings.revealOnComplete === true;
   const compRes = $('#completion-result'); if (compRes) compRes.textContent = '';
+  const details = $('#connection-details');
+  if (details && !details.dataset.userExpanded) {
+    details.hidden = true;
+    document.body.classList.add('details-collapsed');
+    const toggleBtn = $('#toggle-details');
+    if (toggleBtn) toggleBtn.textContent = 'Show Details';
+  }
   setDetailTab('status');
   renderDetails();
   showDialog('#details-dialog');
@@ -1763,6 +1773,7 @@ function setupEventHandlers() {
     const details = $('#connection-details');
     if (!details) return;
     details.hidden = !details.hidden;
+    details.dataset.userExpanded = details.hidden ? '' : 'true';
     document.body.classList.toggle('details-collapsed', details.hidden);
     $('#toggle-details').textContent = details.hidden ? 'Show Details' : 'Hide Details';
     if (progressMode) try { await call('resizeProgress', { expanded: !details.hidden }); } catch (e) { notify(messageOf(e), true); }
@@ -1899,6 +1910,11 @@ if (progressMode) {
     new MutationObserver(() => { document.title = title.textContent; }).observe(title, { childList: true, characterData: true, subtree: true });
   }
   detailId = progressMode;
+  const details = $('#connection-details');
+  if (details) details.hidden = true;
+  const toggleBtn = $('#toggle-details');
+  if (toggleBtn) toggleBtn.textContent = 'Show Details';
+  document.body.classList.add('details-collapsed');
   showDialog('#details-dialog');
 }
 
